@@ -1,5 +1,5 @@
 #include "mbed.h"
-#include "TextLCD.h"
+#include "uLCD_4DGL.h"
 #include "mbed.h"
 #include "fsl_port.h"
 #include "fsl_gpio.h"
@@ -25,23 +25,15 @@
 #define FXOS8700Q_WHOAMI_VAL 0xC7
 
 I2C i2c( PTD9,PTD8);
-I2C i2c_lcd(D14,D15);
+uLCD_4DGL uLCD(D1, D0, D2);
 Serial pc(USBTX, USBRX);
 int m_addr = FXOS8700CQ_SLAVE_ADDR1;
 
 void FXOS8700CQ_readRegs(int addr, uint8_t * data, int len);
 void FXOS8700CQ_writeRegs(uint8_t * data, int len);
 
-//TextLCD_SPI lcd(&spi_lcd, p8, TextLCD::LCD40x4);   // SPI bus, 74595 expander, CS pin, LCD Type
-TextLCD_I2C lcd(&i2c_lcd, 0x4E, TextLCD::LCD16x2);  // I2C bus, PCF8574 Slaveaddress, LCD Type
-//TextLCD_I2C lcd(&i2c_lcd, 0x42, TextLCD::LCD16x2, TextLCD::WS0010); // I2C bus, PCF8574 Slaveaddress, LCD Type, Device Type
-//TextLCD_SPI_N lcd(&spi_lcd, p8, p9);               // SPI bus, CS pin, RS pin, LCDType=LCD16x2, BL=NC, LCDTCtrl=ST7032_3V3
-//TextLCD_I2C_N lcd(&i2c_lcd, ST7032_SA, TextLCD::LCD16x2, NC, TextLCD::ST7032_3V3); // I2C bus, Slaveaddress, LCD Type, BL=NC, LCDTCtrl=ST7032_3V3
-
 int main()
 {
-   // Show cursor as blinking character
-    lcd.setCursor(TextLCD::CurOff_BlkOn);
     pc.baud(115200);
 
    uint8_t who_am_i, data[2], res[6];
@@ -57,7 +49,7 @@ int main()
 
    // Get the slave address
    FXOS8700CQ_readRegs(FXOS8700Q_WHOAMI, &who_am_i, 1);
-   lcd.setUDC(0, (char *) udc_0); 
+   uLCD.cls();
    while (true) {
 
       FXOS8700CQ_readRegs(FXOS8700Q_OUT_X_MSB, res, 6);
@@ -77,17 +69,12 @@ int main()
          acc16 -= UINT14_MAX;
       t[2] = ((float)acc16) / 4096.0f;
 
-      printf("FXOS8700Q ACC: X=%1.4f(%x%x) Y=%1.4f(%x%x) Z=%1.4f(%x%x)\r\n",\
-            t[0], res[0], res[1],\
-            t[1], res[2], res[3],\
-            t[2], res[4], res[5]\
-      );
-      lcd.locate(0,0);
-      lcd.printf("x = %1.3f", t[0]);
-      lcd.locate(10,0);
-      lcd.printf("y = %1.3f", t[1]);
-      lcd.locate(5,1);
-      lcd.printf("z = %1.3f", t[2]);
+      uLCD.locate(0,0);
+      uLCD.printf("x = %1.3f", t[0]);
+      uLCD.locate(0,2);
+      uLCD.printf("y = %1.3f", t[1]);
+      uLCD.locate(0,4);
+      uLCD.printf("z = %1.3f", t[2]);
 
 
       wait(1.0);
